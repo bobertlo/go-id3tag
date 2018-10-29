@@ -5,8 +5,7 @@ import (
 )
 
 var (
-	ErrEOF     = errors.New("EOF")
-	ErrNoTag   = errors.New("no tag")
-	ErrInvalid = errors.New("invalid tag")
-	ErrRead    = errors.New("could not read file")
+	ErrEOF           = errors.New("EOF")
+	ErrInvalidHeader = errors.New("Invalid ID3 header");
+	ErrRead          = errors.New("Read Error")
 )

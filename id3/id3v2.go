@@ -101,12 +101,19 @@ func ParseID3v2String(buf []byte) string {
 	return ""
 }
 
+// ParseID3v2Header parses an ID3v2 header from an io.Reader and returns
+// the data as an ID3v2Header struct
 func ParseID3v2Header(reader io.Reader) (*ID3v2Header, error) {
 	buf := make([]byte, 10)
 	n, err := reader.Read(buf)
 	if err != nil || n != 10 {
 		return nil, ErrRead
 	}
+
+	if string(buf[0:3]) != "ID3" {
+		return nil, ErrInvalidHeader
+	}
+
 	h := new(ID3v2Header)
 	h.Version = int(buf[3])
 	h.MinorVersion = int(buf[4])
@@ -118,6 +125,8 @@ func ParseID3v2Header(reader io.Reader) (*ID3v2Header, error) {
 	return h, nil
 }
 
+// NewID3v2FrameParser creates a new frame parser initialized for the proper 
+// minor version settings.
 func NewID3v2FrameParser(version int) *ID3v2FrameParser {
 	p := new(ID3v2FrameParser)
 	switch version {
@@ -140,22 +149,31 @@ func NewID3v2FrameParser(version int) *ID3v2FrameParser {
 	return p
 }
 
+// ReadFrame reads a frame of an ID3v2 tag and returns an ID3v2Frame with 
+// the frame's id and raw data
 func (p *ID3v2FrameParser) ReadFrame(reader io.Reader) (*ID3v2Frame, error) {
+	// read the frame header into hbuf
 	hbuf := make([]byte, p.HeaderLen)
 	n, err := reader.Read(hbuf)
 	if err != nil || n != p.HeaderLen {
 		return nil, ErrRead
 	}
+
+	// parse frame id and size from the header
 	id := string(hbuf[0:p.IdLen])
 	if id[0] == '\u0000' {
 		return nil, ErrEOF
 	}
 	size := p.SizeParser(hbuf[p.IdLen:p.IdLen+p.SizeLen])
+
+	// create data buffer and read the data
 	data := make([]byte, size)
 	n, err = reader.Read(data)
 	if err != nil || n != int(size) {
 		return nil, ErrRead
 	}
+
+	// create ID3v2Frame to return
 	f := new(ID3v2Frame)
 	f.Id = id
 	f.Data = data

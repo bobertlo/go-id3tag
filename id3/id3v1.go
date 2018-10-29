@@ -26,9 +26,11 @@ func getGenre(i byte) string {
 	return ID3v1Genres[i]
 }
 
+// ParseID3v1Tag parses the ID3v1 tag provided in the data argument and returns
+// an ID3v1Tag struct with parsed strings from the tag for each field.
 func ParseID3v1Tag(data []byte) (*ID3v1Tag, error) {
 	if string(data[0:3]) != "TAG" {
-		return nil, ErrNoTag
+		return nil, ErrInvalidHeader
 	}
 	tag := new(ID3v1Tag)
 	tag.Title = trimString(data[3:33])
